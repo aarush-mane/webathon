@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrintForge — 3D Printing Cost Calculator</title>
+  <meta name="description" content="Professional engineering cost estimator for 3D printed parts. Calculate material, machine wear, energy, labor, and profit margins with live intelligence.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Precision Technical Background Grid -->
+  <div class="bg-grid-overlay" aria-hidden="true"></div>
+  <div class="ambient-glow ambient-glow-1" aria-hidden="true"></div>
+  <div class="ambient-glow ambient-glow-2" aria-hidden="true"></div>
+  <div class="ambient-glow ambient-glow-3" aria-hidden="true"></div>
+  <div class="ambient-glow ambient-glow-4" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-section">
+        <div class="brand-logo" aria-label="PrintForge Logo">
+          <svg viewBox="0 0 40 40" width="38" height="38" fill="none" class="brand-svg">
+            <defs>
+              <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#06b6d4" />
+                <stop offset="50%" stop-color="#3b82f6" />
+                <stop offset="100%" stop-color="#10b981" />
+              </linearGradient>
+              <linearGradient id="nozzleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#38bdf8" />
+                <stop offset="100%" stop-color="#6366f1" />
+              </linearGradient>
+            </defs>
+            <!-- Hexagonal Chassis -->
+            <polygon points="20,2 36,11 36,29 20,38 4,29 4,11" stroke="url(#logoGrad)" stroke-width="2" fill="rgba(6, 182, 212, 0.08)" />
+            <!-- Hotend / Nozzle Geometry -->
+            <path d="M14 10 L26 10 L24 18 L21 24 L19 24 L16 18 Z" fill="url(#nozzleGrad)" />
+            <!-- Heat Block Heat Lines -->
+            <line x1="14" y1="13" x2="26" y2="13" stroke="#e0f2fe" stroke-width="1.2" stroke-linecap="round" opacity="0.8" />
+            <!-- Extrusion Droplet / Tip -->
+            <circle cx="20" cy="27" r="1.8" fill="#10b981" />
+            <!-- Layer Lines below nozzle -->
+            <path d="M11 31 L29 31" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" opacity="0.9" />
+            <path d="M8 34 L32 34" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title-row">
+            <h1 class="brand-name">PRINTFORGE</h1>
+            <span class="brand-tag">v2.4 PRO</span>
+          </div>
+          <p class="brand-subtitle">3D Printing Cost Calculator</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <!-- Live Status Indicator -->
+        <div class="status-indicator" title="Calculation Engine Real-time Active">
+          <span class="status-dot"></span>
+          <span class="status-label">Calculator Ready</span>
+        </div>
+
+        <!-- Currency Selector -->
+        <div class="control-pill currency-selector-pill">
+          <label for="currencySelect" class="sr-only">Currency</label>
+          <span class="pill-icon" aria-hidden="true">💱</span>
+          <select id="currencySelect" class="clean-select" title="Select Currency">
+            <option value="INR" selected>₹ INR</option>
+            <option value="USD">$ USD</option>
+            <option value="EUR">€ EUR</option>
+            <option value="GBP">£ GBP</option>
+          </select>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button id="themeToggleBtn" class="icon-btn" aria-label="Toggle dark/light theme" title="Toggle Theme (Dark / Light)">
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+
+        <!-- Reset Button -->
+        <button id="resetDefaultsBtn" class="action-btn-secondary" title="Reset all fields to default parameters">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+          <span>Reset</span>
+        </button>
+
+        <!-- Download Code ZIP Button -->
+        <a id="downloadZipBtn" href="printforge.zip" download="printforge.zip" class="action-btn-secondary download-zip-link" title="Download entire codebase as ZIP archive">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>ZIP</span>
+        </a>
+
+        <!-- Export Estimate Button -->
+        <button id="headerExportBtn" class="action-btn-primary" title="Export Quote / Invoice">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Export</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-main">
+    <!-- Hero / Quick Summary Banner -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <div class="hero-text-block">
+          <span class="hero-badge">ENGINEERING COST ARCHITECTURE</span>
+          <h2 class="hero-title">Know the real cost of every print.</h2>
+          <p class="hero-subtitle">Calculate material, machine, energy, labor and overhead costs in seconds with deterministic precision.</p>
+        </div>
+
+        <!-- 3 Compact Quick Statistics Cards -->
+        <div class="quick-stats-grid">
+          <div class="quick-stat-card stat-material">
+            <div class="stat-icon-wrapper" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="9"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 3v3M12 18v3M3 12h3M18 12h3"></path>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Material Cost</span>
+              <div class="stat-value" id="quickStatMaterial">₹225.00</div>
+              <span class="stat-hint" id="quickStatMaterialHint">125g @ ₹1.80/g</span>
+            </div>
+          </div>
+
+          <div class="quick-stat-card stat-machine">
+            <div class="stat-icon-wrapper" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+                <path d="M7 8h10M7 12h6"></path>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Machine Cost</span>
+              <div class="stat-value" id="quickStatMachine">₹45.50</div>
+              <span class="stat-hint" id="quickStatMachineHint">6.5h @ ₹7.00/h</span>
+            </div>
+          </div>
+
+          <div class="quick-stat-card stat-total-cost">
+            <div class="stat-icon-wrapper" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Total Print Cost</span>
+              <div class="stat-value text-accent-glow" id="quickStatTotal">₹555.59</div>
+              <span class="stat-hint" id="quickStatUnitCost">₹555.59 / part (Qty: 1)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Presets Carousel / Quick Buttons -->
+      <div class="presets-bar">
+        <span class="presets-label">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          Quick Presets:
+        </span>
+        <div class="preset-chips">
+          <button class="preset-chip active" data-preset="pla_prototype">PLA Prototype</button>
+          <button class="preset-chip" data-preset="petg_functional">PETG Functional Part</button>
+          <button class="preset-chip" data-preset="abs_engineering">ABS Engineering Part</button>
+          <button class="preset-chip" data-preset="resin_miniature">Resin Miniature</button>
+          <button class="preset-chip" data-preset="high_volume">High-Volume Production</button>
+          <button class="preset-chip" data-preset="custom">Custom Setup</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Two-Column Calculator Layout -->
+    <div class="calculator-layout">
+      <!-- LEFT COLUMN: PRINT PARAMETERS -->
+      <div class="layout-column params-column">
+        <div class="column-header">
+          <div class="column-title-group">
+            <h3 class="column-title">Print Parameters</h3>
+            <span class="column-tag">Configuration Engine</span>
+          </div>
+          <span class="column-caption">Real-time dynamic cost inputs</span>
+        </div>
+
+        <!-- Section A: Material -->
+        <section class="param-card" id="cardMaterial">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon material-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>
+                  <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>
+                  <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line>
+                  <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line>
+                </svg>
+              </div>
+              <h4 class="card-title">A. Material Parameters</h4>
+            </div>
+            <div class="tooltip-trigger" data-tooltip="Material used for the print. Spool price and density dictate weight, filament length, and cost per gram.">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="input-grid">
+              <!-- Material Type Dropdown -->
+              <div class="form-group full-width">
+                <label for="materialType" class="field-label">
+                  <span>Material Type</span>
+                  <span class="field-info" id="materialPropertiesTag">FDM Thermoplastic • ~1.24 g/cm³</span>
+                </label>
+                <div class="select-wrapper">
+                  <select id="materialType" class="field-select">
+                    <option value="PLA" selected>PLA (Polylactic Acid)</option>
+                    <option value="PETG">PETG (Polyethylene Terephthalate)</option>
+                    <option value="ABS">ABS (Acrylonitrile Butadiene Styrene)</option>
+                    <option value="ASA">ASA (Acrylonitrile Styrene Acrylate)</option>
+                    <option value="TPU">TPU (Thermoplastic Polyurethane 95A)</option>
+                    <option value="Nylon">Nylon (Polyamide PA6/PA12)</option>
+                    <option value="Resin">Resin (Standard Photopolymer)</option>
+                    <option value="Custom">Custom Filament / Resin</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Material Price -->
+              <div class="form-group">
+                <label for="materialPriceInput" class="field-label">
+                  <span>Material Price (<span class="currency-symbol">₹</span>/<span id="priceUnitLabel">g</span>)</span>
+                  <div class="tooltip-trigger" data-tooltip="Price per gram or per kilogram of raw spool/resin. Switching unit auto-converts.">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
+                </label>
+                <div class="input-with-addons">
+                  <span class="input-addon-left currency-symbol">₹</span>
+                  <input type="number" id="materialPriceInput" class="field-input text-right" step="0.01" min="0" value="1.80" placeholder="0.00">
+                  <button type="button" id="priceUnitToggleBtn" class="addon-toggle-btn" title="Toggle between Price per Gram and Price per Kg">/g</button>
+                </div>
+                <span class="field-helper" id="spoolPriceEquivalent">Equivalent to ₹1,800.00 / 1kg spool</span>
+              </div>
+
+              <!-- Material Quantity -->
+              <div class="form-group">
+                <label for="materialQuantityInput" class="field-label">
+                  <span>Material Quantity</span>
+                  <!-- Mass unit toggle -->
+                  <div class="inline-segment-toggle" id="massUnitSegment">
+                    <button type="button" class="segment-btn active" data-unit="g">grams</button>
+                    <button type="button" class="segment-btn" data-unit="kg">kg</button>
+                  </div>
+                </label>
+                <div class="input-with-addons">
+                  <input type="number" id="materialQuantityInput" class="field-input" step="1" min="0" value="125" placeholder="0">
+                  <span class="input-addon-right" id="massUnitLabel">g</span>
+                </div>
+                <span class="field-helper" id="massGramsHelper">= 125.00 grams</span>
+              </div>
+
+              <!-- Material Density (Optional / Advanced) -->
+              <div class="form-group full-width density-row">
+                <div class="expandable-header" id="densityToggleHeader">
+                  <span class="expandable-title">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    Advanced: Material Density & Volume Options
+                  </span>
+                  <span class="expandable-badge" id="currentDensityBadge">1.24 g/cm³</span>
+                </div>
+                <div class="expandable-content" id="densityContent">
+                  <div class="density-flex">
+                    <div class="form-subgroup">
+                      <label for="materialDensityInput" class="field-label-sm">
+                        <span>Density (g/cm³)</span>
+                        <div class="tooltip-trigger" data-tooltip="Specific gravity of material. Used to calculate volumetric displacement (cm³) and total extruded filament length in meters.">
+                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        </div>
+                      </label>
+                      <input type="number" id="materialDensityInput" class="field-input field-input-sm" step="0.01" min="0.1" max="10" value="1.24">
+                    </div>
+                    <div class="form-subgroup">
+                      <label for="filamentDiameterSelect" class="field-label-sm">Filament Diameter</label>
+                      <select id="filamentDiameterSelect" class="field-select field-select-sm">
+                        <option value="1.75" selected>1.75 mm standard</option>
+                        <option value="2.85">2.85 mm (Ultimaker)</option>
+                      </select>
+                    </div>
+                    <div class="density-output-chip">
+                      <span class="chip-label">Calculated Volume:</span>
+                      <strong id="calculatedVolumeTag">100.8 cm³</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section B: Print Time -->
+        <section class="param-card" id="cardPrintTime">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon time-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <h4 class="card-title">B. Print Duration</h4>
+            </div>
+            <div class="tooltip-trigger" data-tooltip="Total slicing duration. Directly drives machine wear, depreciation, and electrical power consumption.">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="time-inputs-row">
+              <!-- Hours -->
+              <div class="time-box">
+                <label for="printHoursInput" class="time-box-label">Hours</label>
+                <div class="time-input-stepper">
+                  <input type="number" id="printHoursInput" class="time-input" min="0" max="999" value="6" placeholder="0">
+                  <div class="stepper-buttons">
+                    <button type="button" class="step-btn" data-target="printHoursInput" data-dir="up">▲</button>
+                    <button type="button" class="step-btn" data-target="printHoursInput" data-dir="down">▼</button>
+                  </div>
+                </div>
+              </div>
+
+              <span class="time-colon">:</span>
+
+              <!-- Minutes -->
+              <div class="time-box">
+                <label for="printMinutesInput" class="time-box-label">Minutes</label>
+                <div class="time-input-stepper">
+                  <input type="number" id="printMinutesInput" class="time-input" min="0" max="59" value="30" placeholder="0">
+                  <div class="stepper-buttons">
+                    <button type="button" class="step-btn" data-target="printMinutesInput" data-dir="up">▲</button>
+                    <button type="button" class="step-btn" data-target="printMinutesInput" data-dir="down">▼</button>
+                  </div>
+                </div>
+              </div>
+
+              <span class="time-colon">:</span>
+
+              <!-- Optional Seconds -->
+              <div class="time-box">
+                <label for="printSecondsInput" class="time-box-label">Seconds</label>
+                <div class="time-input-stepper">
+                  <input type="number" id="printSecondsInput" class="time-input" min="0" max="59" value="0" placeholder="0">
+                  <div class="stepper-buttons">
+                    <button type="button" class="step-btn" data-target="printSecondsInput" data-dir="up">▲</button>
+                    <button type="button" class="step-btn" data-target="printSecondsInput" data-dir="down">▼</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="time-total-chip">
+                <span class="chip-label">Total Time:</span>
+                <strong id="totalHoursDecimalTag">6.50 hrs</strong>
+                <span class="chip-sub" id="totalMinutesTag">(390 mins)</span>
+              </div>
+            </div>
+
+            <!-- Visual Timeline Indicator -->
+            <div class="timeline-container">
+              <div class="timeline-header">
+                <span class="timeline-label">Print Duration Scale</span>
+                <span class="timeline-scale-value" id="timelineScaleText">Medium Print (6h 30m)</span>
+              </div>
+              <div class="timeline-track">
+                <div class="timeline-fill" id="timelineFillBar" style="width: 27%;"></div>
+                <div class="timeline-markers">
+                  <span class="marker marker-0">0h</span>
+                  <span class="marker marker-6">6h</span>
+                  <span class="marker marker-12">12h</span>
+                  <span class="marker marker-18">18h</span>
+                  <span class="marker marker-24">24h+</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section C: Machine & Energy -->
+        <section class="param-card" id="cardMachine">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon machine-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+              </div>
+              <h4 class="card-title">C. Machine & Energy</h4>
+            </div>
+
+            <!-- Depreciation Mode Switch -->
+            <div class="mode-switch-wrapper">
+              <label class="switch-control" title="Toggle between depreciation-based rate and manual flat rate">
+                <input type="checkbox" id="machineRateModeToggle" checked>
+                <span class="switch-slider"></span>
+                <span class="switch-label" id="machineModeLabel">Auto Depreciation</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <!-- Machine Cost Inputs (Auto Depreciation Mode) -->
+            <div id="autoDepreciationFields" class="input-grid">
+              <div class="form-group">
+                <label for="machinePurchasePrice" class="field-label">
+                  <span>Machine Purchase Price</span>
+                  <div class="tooltip-trigger" data-tooltip="Total capital cost of the 3D printer hardware (e.g. ₹35,000 / $450).">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
+                </label>
+                <div class="input-with-addons">
+                  <span class="input-addon-left currency-symbol">₹</span>
+                  <input type="number" id="machinePurchasePrice" class="field-input text-right" min="0" step="100" value="35000">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="machineLifespanHours" class="field-label">
+                  <span>Expected Lifespan (Hours)</span>
+                  <div class="tooltip-trigger" data-tooltip="Expected operating runtime before machine replacement or full write-off (standard is 3,000 – 10,000 hours).">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
+                </label>
+                <div class="input-with-addons">
+                  <input type="number" id="machineLifespanHours" class="field-input" min="100" step="100" value="5000">
+                  <span class="input-addon-right">hrs</span>
+                </div>
+                <span class="field-helper" id="calculatedDepreciationHelper">= <span class="currency-symbol">₹</span>7.00 / operating hour</span>
+              </div>
+            </div>
+
+            <!-- Manual Hourly Rate (Hidden unless toggled) -->
+            <div id="manualRateFields" class="input-grid hidden">
+              <div class="form-group full-width">
+                <label for="manualMachineHourlyRate" class="field-label">
+                  <span>Machine Hourly Rate (<span class="currency-symbol">₹</span>/hr)</span>
+                  <div class="tooltip-trigger" data-tooltip="Custom flat hourly rate charged for machine operating time.">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
+                </label>
+                <div class="input-with-addons">
+                  <span class="input-addon-left currency-symbol">₹</span>
+                  <input type="number" id="manualMachineHourlyRate" class="field-input text-right" min="0" step="0.5" value="7.00">
+                  <span class="input-addon-right">/ hr</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Power & Maintenance Grid -->
+            <div class="input-grid section-divider-top">
+              <!-- Electricity Consumption -->
+              <div class="form-group">
+                <label for="machinePowerWatts" class="field-label">
+                  <span>Power Consumption</span>
+                  <div class="inline-segment-toggle" id="powerUnitSegment">
+                    <button type="button" class="segment-btn active" data-unit="W">Watts</button>
+                    <button type="button" class="segment-btn" data-unit="kW">kW</button>
+                  </div>
+                </label>
+                <div class="input-with-addons">
+                  <input type="number" id="machinePowerWatts" class="field-input" min="1" step="5" value="120">
+                  <span class="input-addon-right" id="powerUnitLabel">W</span>
+                </div>
+                <span class="field-helper" id="energyConsumedHelper">Total: 0.78 kWh</span>
+              </div>
+
+              <!-- Electricity Price -->
+              <div class="form-group">
+                <label for="electricityRatePerKwh" class="field-label">
+                  <span>Electricity Rate (<span class="currency-symbol">₹</span>/kWh)</span>
+                  <div class="tooltip-trigger" data-tooltip="Local commercial or residential electricity tariff per kilowatt-hour.">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
+                </label>
+                <div class="input-with-addons">
+                  <span class="input-addon-left currency-symbol">₹</span>
+                  <input type="number" id="electricityRatePerKwh" class="field-input text-right" min="0" step="0.5" value="10.00">
+                  <span class="input-addon-right">/ kWh</span>
+                </div>
+                <span class="field-helper" id="calculatedElectricityHelper">= <span class="currency-symbol">₹</span>7.80 energy cost</span>
+              </div>
+
+              <!-- Maintenance Cost -->
+              <div class="form-group full-width">
+                <label for="maintenanceRatePerHour" class="field-label">
+                  <span>Maintenance Cost per Operating Hour</span>
+                  <div class="tooltip-trigger" data-tooltip="Accounts for replacement nozzles, belts, lead screws lubrication, build sheets, heater cartridges, and wear items over time.">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
+                </label>
+                <div class="input-with-addons">
+                  <span class="input-addon-left currency-symbol">₹</span>
+                  <input type="number" id="maintenanceRatePerHour" class="field-input text-right" min="0" step="0.5" value="8.00">
+                  <span class="input-addon-right">/ hr</span>
+                </div>
+                <span class="field-helper" id="calculatedMaintenanceHelper">= <span class="currency-symbol">₹</span>52.00 maintenance allocation</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section D: Labor -->
+        <section class="param-card" id="cardLabor">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon labor-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <h4 class="card-title">D. Labor & Post-Processing</h4>
+            </div>
+
+            <!-- Labor Toggle -->
+            <div class="mode-switch-wrapper">
+              <label class="switch-control" title="Enable or disable labor cost calculation">
+                <input type="checkbox" id="laborEnabledToggle" checked>
+                <span class="switch-slider"></span>
+                <span class="switch-label" id="laborToggleLabel">Labor Active</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="card-body" id="laborFieldsBody">
+            <div class="input-grid">
+              <!-- Labor Hourly Rate -->
+              <div class="form-group full-width">
+                <label for="laborHourlyRate" class="field-label">
+                  <span>Operator Hourly Rate</span>
+                  <div class="tooltip-trigger" data-tooltip="Hourly cost of technician/operator time for file preparation, bed cleaning, and manual post-processing.">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
+                </label>
+                <div class="input-with-addons">
+                  <span class="input-addon-left currency-symbol">₹</span>
+                  <input type="number" id="laborHourlyRate" class="field-input text-right" min="0" step="10" value="150.00">
+                  <span class="input-addon-right">/ hr</span>
+                </div>
+              </div>
+
+              <!-- Prep Time -->
+              <div class="form-group">
+                <label for="prepTimeMinutes" class="field-label">
+                  <span>Prep & Slicing Time</span>
+                  <span class="field-info">Bed prep, file checks</span>
+                </label>
+                <div class="input-with-addons">
+                  <input type="number" id="prepTimeMinutes" class="field-input" min="0" max="600" step="5" value="15">
+                  <span class="input-addon-right">mins</span>
+                </div>
+              </div>
+
+              <!-- Post-Processing Time -->
+              <div class="form-group">
+                <label for="postTimeMinutes" class="field-label">
+                  <span>Post-Processing Time</span>
+                  <span class="field-info">Support removal, cure</span>
+                </label>
+                <div class="input-with-addons">
+                  <input type="number" id="postTimeMinutes" class="field-input" min="0" max="600" step="5" value="15">
+                  <span class="input-addon-right">mins</span>
+                </div>
+              </div>
+
+              <div class="form-group full-width">
+                <div class="labor-summary-chip">
+                  <span class="chip-label">Total Labor:</span>
+                  <strong id="totalLaborDurationTag">0.50 hrs (30 mins)</strong>
+                  <span class="chip-badge" id="totalLaborCostTag">= <span class="currency-symbol">₹</span>75.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section E: Wastage & Risk Allowance -->
+        <section class="param-card" id="cardWaste">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon waste-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </div>
+              <h4 class="card-title">E. Wastage & Risk Allowance</h4>
+            </div>
+            <div class="tooltip-trigger" data-tooltip="Accounts for support material, purge lines, skirts, brims, and print failure probability.">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="input-grid">
+              <!-- Material Waste Percentage -->
+              <div class="form-group">
+                <label for="materialWastePercent" class="field-label">
+                  <span>Material Waste %</span>
+                  <div class="tooltip-trigger" data-tooltip="Accounts for discarded support material, purge towers, filament poop, and brim/skirt (typically 5% - 15%).">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
+                </label>
+                <div class="range-and-number">
+                  <input type="range" id="materialWasteSlider" class="field-range" min="0" max="40" step="1" value="8">
+                  <div class="input-with-addons input-mini">
+                    <input type="number" id="materialWastePercent" class="field-input text-right" min="0" max="100" step="1" value="8">
+                    <span class="input-addon-right">%</span>
+                  </div>
+                </div>
+                <span class="field-helper" id="wasteCostHelper">= <span class="currency-symbol">₹</span>18.00 waste</span>
+              </div>
+
+              <!-- Failed-Print Allowance -->
+              <div class="form-group">
+                <label for="failedPrintAllowancePercent" class="field-label">
+                  <span>Failure Risk Allowance %</span>
+                  <div class="tooltip-trigger" data-tooltip="Contingency buffer for warping, layer shifts, or nozzle clogs based on geometric complexity.">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
+                </label>
+                <div class="range-and-number">
+                  <input type="range" id="failedPrintSlider" class="field-range" min="0" max="30" step="1" value="0">
+                  <div class="input-with-addons input-mini">
+                    <input type="number" id="failedPrintAllowancePercent" class="field-input text-right" min="0" max="100" step="1" value="0">
+                    <span class="input-addon-right">%</span>
+                  </div>
+                </div>
+                <span class="field-helper" id="failureCostHelper">= <span class="currency-symbol">₹</span>0.00 risk buffer</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section F: Business / Profit & Quantity -->
+        <section class="param-card" id="cardBusiness">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon business-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="1" x2="12" y2="23"></line>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+              </div>
+              <h4 class="card-title">F. Business Overhead & Margin</h4>
+            </div>
+            <div class="tooltip-trigger" data-tooltip="Overhead encompasses rent, software subscriptions, insurance, and packaging. Profit margin establishes commercial viability.">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="input-grid">
+              <!-- Overhead % -->
+              <div class="form-group">
+                <label for="overheadPercent" class="field-label">
+                  <span>Overhead %</span>
+                  <div class="tooltip-trigger" data-tooltip="Additional business expenses: workshop lease, internet, CAD licenses, packaging materials, and administrative overhead.">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
+                </label>
+                <div class="range-and-number">
+                  <input type="range" id="overheadSlider" class="field-range" min="0" max="30" step="1" value="5">
+                  <div class="input-with-addons input-mini">
+                    <input type="number" id="overheadPercent" class="field-input text-right" min="0" max="100" step="1" value="5">
+                    <span class="input-addon-right">%</span>
+                  </div>
+                </div>
+                <span class="field-helper" id="overheadCostHelper">= <span class="currency-symbol">₹</span>21.17 overhead</span>
+              </div>
+
+              <!-- Desired Profit % -->
+              <div class="form-group">
+                <label for="profitPercent" class="field-label">
+                  <span>Desired Profit Margin %</span>
+                  <div class="tooltip-trigger" data-tooltip="Profit percentage applied on top of total base and overhead expenses.">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
+                </label>
+                <div class="range-and-number">
+                  <input type="range" id="profitSlider" class="field-range" min="0" max="100" step="1" value="25">
+                  <div class="input-with-addons input-mini">
+                    <input type="number" id="profitPercent" class="field-input text-right" min="0" max="500" step="1" value="25">
+                    <span class="input-addon-right">%</span>
+                  </div>
+                </div>
+                <span class="field-helper" id="profitCostHelper">= +<span class="currency-symbol">₹</span>111.12 net profit</span>
+              </div>
+
+              <!-- Batch Quantity -->
+              <div class="form-group full-width">
+                <label for="partsQuantityInput" class="field-label">
+                  <span>Batch Quantity (Parts Printed)</span>
+                  <span class="field-info">Amortizes preparation setup across units</span>
+                </label>
+                <div class="quantity-stepper">
+                  <button type="button" class="qty-btn" id="qtyMinusBtn">-</button>
+                  <input type="number" id="partsQuantityInput" class="field-input qty-input" min="1" max="10000" step="1" value="1">
+                  <button type="button" class="qty-btn" id="qtyPlusBtn">+</button>
+                  <div class="quick-qty-pills">
+                    <button type="button" class="pill-chip active" data-qty="1">1x</button>
+                    <button type="button" class="pill-chip" data-qty="5">5x</button>
+                    <button type="button" class="pill-chip" data-qty="20">20x</button>
+                    <button type="button" class="pill-chip" data-qty="50">50x</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT COLUMN: COST INTELLIGENCE, CHARTS & PRINT DNA -->
+      <div class="layout-column output-column">
+        <!-- Hero Cost Intelligence Panel -->
+        <section class="intel-card hero-intel-card" id="cardCostIntel">
+          <div class="intel-header">
+            <div class="intel-badge">
+              <span class="pulse-indicator"></span>
+              <span>LIVE COST INTELLIGENCE</span>
+            </div>
+            <div class="intel-actions">
+              <button id="quickSaveBtn" class="pill-btn-ghost" title="Save this estimate to history">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <span>Save Estimate</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Central Grand Total Display -->
+          <div class="grand-total-display">
+            <span class="total-label">Estimated Total Cost</span>
+            <div class="grand-number-row">
+              <span class="grand-currency currency-symbol">₹</span>
+              <span class="grand-amount" id="grandTotalAmount">555.59</span>
+            </div>
+
+            <!-- Per Part Highlight Badge -->
+            <div class="per-part-container">
+              <div class="per-part-pill">
+                <span class="per-part-caption">Cost per part:</span>
+                <strong class="per-part-val" id="costPerPartVal"><span class="currency-symbol">₹</span>555.59</strong>
+              </div>
+              <div class="margin-pill">
+                <span class="margin-caption">Net Margin:</span>
+                <strong class="margin-val" id="netMarginTag">+₹111.12 (25%)</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Donut Chart Section -->
+          <div class="chart-and-legend-wrapper">
+            <div class="donut-chart-container">
+              <svg id="costDonutSvg" viewBox="0 0 200 200" class="donut-svg">
+                <!-- Center Hole Backdrop -->
+                <circle cx="100" cy="100" r="62" class="donut-center-bg"></circle>
+                <!-- Dynamic SVG Arcs will be rendered here by JS -->
+                <g id="donutArcsGroup"></g>
+                <!-- Center Readout -->
+                <g class="donut-center-content">
+                  <text x="100" y="93" text-anchor="middle" class="donut-center-title" id="donutHoverTitle">TOTAL</text>
+                  <text x="100" y="112" text-anchor="middle" class="donut-center-value" id="donutHoverValue">₹555.59</text>
+                  <text x="100" y="125" text-anchor="middle" class="donut-center-sub" id="donutHoverSub">100%</text>
+                </g>
+              </svg>
+              <div class="chart-tooltip" id="donutTooltip" aria-hidden="true"></div>
+            </div>
+
+            <!-- Itemized Meter Bars -->
+            <div class="breakdown-list" id="breakdownList">
+              <!-- Material -->
+              <div class="breakdown-row" data-category="material" tabindex="0">
+                <div class="row-header">
+                  <span class="cat-indicator color-material"></span>
+                  <span class="cat-name">Material</span>
+                  <span class="cat-pct" id="pctMaterial">40.5%</span>
+                  <span class="cat-val" id="valMaterial">₹225.00</span>
+                </div>
+                <div class="meter-bar-track">
+                  <div class="meter-bar-fill fill-material" id="barMaterial" style="width: 40.5%;"></div>
+                </div>
+              </div>
+
+              <!-- Machine -->
+              <div class="breakdown-row" data-category="machine" tabindex="0">
+                <div class="row-header">
+                  <span class="cat-indicator color-machine"></span>
+                  <span class="cat-name">Machine Depreciation</span>
+                  <span class="cat-pct" id="pctMachine">8.2%</span>
+                  <span class="cat-val" id="valMachine">₹45.50</span>
+                </div>
+                <div class="meter-bar-track">
+                  <div class="meter-bar-fill fill-machine" id="barMachine" style="width: 8.2%;"></div>
+                </div>
+              </div>
+
+              <!-- Electricity -->
+              <div class="breakdown-row" data-category="electricity" tabindex="0">
+                <div class="row-header">
+                  <span class="cat-indicator color-electricity"></span>
+                  <span class="cat-name">Electricity</span>
+                  <span class="cat-pct" id="pctElectricity">1.4%</span>
+                  <span class="cat-val" id="valElectricity">₹7.80</span>
+                </div>
+                <div class="meter-bar-track">
+                  <div class="meter-bar-fill fill-electricity" id="barElectricity" style="width: 1.4%;"></div>
+                </div>
+              </div>
+
+              <!-- Labor -->
+              <div class="breakdown-row" data-category="labor" tabindex="0">
+                <div class="row-header">
+                  <span class="cat-indicator color-labor"></span>
+                  <span class="cat-name">Labor & Post-Process</span>
+                  <span class="cat-pct" id="pctLabor">13.5%</span>
+                  <span class="cat-val" id="valLabor">₹75.00</span>
+                </div>
+                <div class="meter-bar-track">
+                  <div class="meter-bar-fill fill-labor" id="barLabor" style="width: 13.5%;"></div>
+                </div>
+              </div>
+
+              <!-- Maintenance -->
+              <div class="breakdown-row" data-category="maintenance" tabindex="0">
+                <div class="row-header">
+                  <span class="cat-indicator color-maintenance"></span>
+                  <span class="cat-name">Maintenance</span>
+                  <span class="cat-pct" id="pctMaintenance">9.4%</span>
+                  <span class="cat-val" id="valMaintenance">₹52.00</span>
+                </div>
+                <div class="meter-bar-track">
+                  <div class="meter-bar-fill fill-maintenance" id="barMaintenance" style="width: 9.4%;"></div>
+                </div>
+              </div>
+
+              <!-- Waste & Risk -->
+              <div class="breakdown-row" data-category="waste" tabindex="0">
+                <div class="row-header">
+                  <span class="cat-indicator color-waste"></span>
+                  <span class="cat-name">Waste & Failure Buffer</span>
+                  <span class="cat-pct" id="pctWaste">3.2%</span>
+                  <span class="cat-val" id="valWaste">₹18.00</span>
+                </div>
+                <div class="meter-bar-track">
+                  <div class="meter-bar-fill fill-waste" id="barWaste" style="width: 3.2%;"></div>
+                </div>
+              </div>
+
+              <!-- Overhead -->
+              <div class="breakdown-row" data-category="overhead" tabindex="0">
+                <div class="row-header">
+                  <span class="cat-indicator color-overhead"></span>
+                  <span class="cat-name">Business Overhead</span>
+                  <span class="cat-pct" id="pctOverhead">3.8%</span>
+                  <span class="cat-val" id="valOverhead">₹21.17</span>
+                </div>
+                <div class="meter-bar-track">
+                  <div class="meter-bar-fill fill-overhead" id="barOverhead" style="width: 3.8%;"></div>
+                </div>
+              </div>
+
+              <!-- Profit -->
+              <div class="breakdown-row" data-category="profit" tabindex="0">
+                <div class="row-header">
+                  <span class="cat-indicator color-profit"></span>
+                  <span class="cat-name">Profit Margin</span>
+                  <span class="cat-pct" id="pctProfit">20.0%</span>
+                  <span class="cat-val" id="valProfit">₹111.12</span>
+                </div>
+                <div class="meter-bar-track">
+                  <div class="meter-bar-fill fill-profit" id="barProfit" style="width: 20.0%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Financial Subtotals Matrix -->
+          <div class="subtotals-matrix">
+            <div class="subtotal-item">
+              <span class="subtotal-label">Base Cost</span>
+              <strong class="subtotal-val" id="subtotalBaseCost">₹423.30</strong>
+            </div>
+            <div class="subtotal-item">
+              <span class="subtotal-label">Cost Before Profit</span>
+              <strong class="subtotal-val" id="subtotalCostBeforeProfit">₹444.47</strong>
+            </div>
+            <div class="subtotal-item">
+              <span class="subtotal-label">Final Batch Price</span>
+              <strong class="subtotal-val text-accent" id="subtotalFinalPrice">₹555.59</strong>
+            </div>
+            <div class="subtotal-item highlight-item">
+              <span class="subtotal-label">Final Price / Part</span>
+              <strong class="subtotal-val text-success" id="subtotalPerPart">₹555.59</strong>
+            </div>
+          </div>
+        </section>
+
+        <!-- PRINT DNA VISUALIZATION WIDGET -->
+        <section class="intel-card dna-card" id="cardPrintDNA">
+          <div class="intel-header">
+            <div class="card-title-group">
+              <div class="card-icon dna-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+              </div>
+              <h4 class="card-title">Print DNA & Simulation</h4>
+            </div>
+            <span class="column-tag">Interactive Telemetry</span>
+          </div>
+
+          <!-- DNA Metrics Grid -->
+          <div class="dna-telemetry-grid">
+            <div class="dna-metric-box">
+              <span class="dna-metric-label">Estimated Layers</span>
+              <strong class="dna-metric-value" id="dnaLayerCount">975</strong>
+              <span class="dna-metric-sub">@ 0.20mm height</span>
+            </div>
+            <div class="dna-metric-box">
+              <span class="dna-metric-label">Filament Length</span>
+              <strong class="dna-metric-value" id="dnaFilamentLength">41.9 m</strong>
+              <span class="dna-metric-sub">1.75mm diameter</span>
+            </div>
+            <div class="dna-metric-box">
+              <span class="dna-metric-label">Total Volume</span>
+              <strong class="dna-metric-value" id="dnaVolume">100.8 cm³</strong>
+              <span class="dna-metric-sub">Mass: 125.0g</span>
+            </div>
+            <div class="dna-metric-box">
+              <span class="dna-metric-label">Energy Footprint</span>
+              <strong class="dna-metric-value" id="dnaEnergy">0.78 kWh</strong>
+              <span class="dna-metric-sub">~120W active</span>
+            </div>
+          </div>
+
+          <!-- Interactive 3D Print Layer Visualizer -->
+          <div class="print-simulation-widget">
+            <div class="sim-header">
+              <div class="sim-title-group">
+                <span class="sim-label">Virtual Toolpath & Layer Stack</span>
+                <span class="sim-status" id="simStatusText">Ready (0%)</span>
+              </div>
+              <div class="sim-controls">
+                <button type="button" id="simPlayBtn" class="sim-btn" title="Auto-play print simulation">
+                  <svg id="simPlayIcon" viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <span id="simPlayBtnText">Simulate</span>
+                </button>
+                <button type="button" id="simResetBtn" class="sim-btn-icon" title="Reset simulation to 0%">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 4v6h6M23 20v-6h-6"></path>
+                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Virtual 3D Printer Chamber Visualizer -->
+            <div class="sim-chamber-viewport">
+              <!-- Build Plate Grid -->
+              <div class="sim-grid-plane"></div>
+
+              <!-- Layer Stack Rendering Canvas / SVG -->
+              <svg id="simLayerSvg" viewBox="0 0 320 180" class="sim-svg">
+                <defs>
+                  <!-- Hotend Glow Filter -->
+                  <filter id="hotendGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
+                  </filter>
+                  <linearGradient id="layerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#06b6d4" />
+                    <stop offset="50%" stop-color="#3b82f6" />
+                    <stop offset="100%" stop-color="#10b981" />
+                  </linearGradient>
+                  <linearGradient id="nozzleMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#cbd5e1" />
+                    <stop offset="100%" stop-color="#64748b" />
+                  </linearGradient>
+                </defs>
+
+                <!-- Build Plate Base -->
+                <polygon points="40,150 280,150 240,170 80,170" fill="rgba(30, 41, 59, 0.7)" stroke="#334155" stroke-width="1.2" />
+                <line x1="80" y1="150" x2="110" y2="170" stroke="#475569" stroke-width="0.8" opacity="0.4" />
+                <line x1="160" y1="150" x2="160" y2="170" stroke="#475569" stroke-width="0.8" opacity="0.4" />
+                <line x1="240" y1="150" x2="210" y2="170" stroke="#475569" stroke-width="0.8" opacity="0.4" />
+
+                <!-- Layer Stack (Grows upward with progress) -->
+                <g id="simLayerStackGroup">
+                  <!-- Dynamic printed lines rendered by JS -->
+                </g>
+
+                <!-- Gantry Rail -->
+                <line x1="20" y1="35" x2="300" y2="35" stroke="#334155" stroke-width="2.5" stroke-linecap="round" id="simGantryRail" />
+
+                <!-- Toolhead / Extruder Nozzle -->
+                <g id="simNozzleGroup" transform="translate(160, 40)">
+                  <!-- Extruder Body -->
+                  <rect x="-14" y="-12" width="28" height="20" rx="3" fill="url(#nozzleMetal)" stroke="#94a3b8" stroke-width="1" />
+                  <!-- Heatsink Fins -->
+                  <line x1="-12" y1="-7" x2="12" y2="-7" stroke="#1e293b" stroke-width="1" />
+                  <line x1="-12" y1="-3" x2="12" y2="-3" stroke="#1e293b" stroke-width="1" />
+                  <!-- Brass Nozzle Tip -->
+                  <polygon points="-7,8 7,8 3,18 -3,18" fill="#eab308" stroke="#ca8a04" stroke-width="0.8" />
+                  <!-- Heat Glow Aura -->
+                  <circle cx="0" cy="18" r="4" fill="#f59e0b" filter="url(#hotendGlow)" opacity="0.8" />
+                  <circle cx="0" cy="18" r="1.5" fill="#fff" />
+                  <!-- Active Filament Extrusion Line -->
+                  <line x1="0" y1="18" x2="0" y2="24" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" id="simExtrusionBead" />
+                </g>
+              </svg>
+            </div>
+
+            <!-- Print Progress Slider -->
+            <div class="sim-slider-container">
+              <div class="slider-labels">
+                <span class="slider-caption">Print Progress</span>
+                <span class="slider-val" id="simSliderPercentText">0%</span>
+              </div>
+              <input type="range" id="simProgressSlider" class="sim-range-input" min="0" max="100" step="0.5" value="0">
+              
+              <!-- Telemetry Readouts at current slider position -->
+              <div class="sim-dynamic-readouts">
+                <div class="readout-item">
+                  <span class="readout-lbl">Layer:</span>
+                  <span class="readout-val" id="simCurrentLayerText">0 / 975</span>
+                </div>
+                <div class="readout-item">
+                  <span class="readout-lbl">Material Extruded:</span>
+                  <span class="readout-val" id="simCurrentMassText">0.0 g / 125.0 g</span>
+                </div>
+                <div class="readout-item">
+                  <span class="readout-lbl">Elapsed Time:</span>
+                  <span class="readout-val" id="simCurrentTimeText">0h 0m / 6h 30m</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- DETERMINISTIC COST INSIGHTS PANEL -->
+        <section class="intel-card insights-card" id="cardInsights">
+          <div class="intel-header">
+            <div class="card-title-group">
+              <div class="card-icon insights-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                </svg>
+              </div>
+              <h4 class="card-title">Deterministic Cost Insights</h4>
+            </div>
+            <span class="badge-deterministic">Rule-Engine Active</span>
+          </div>
+
+          <div class="insights-container" id="insightsContainer">
+            <!-- Dynamic insight cards injected by JavaScript -->
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- LOWER SECTION: SCENARIO COMPARISON & ESTIMATE HISTORY -->
+    <div class="bottom-sections-grid">
+      <!-- SCENARIO COMPARISON -->
+      <section class="bottom-card scenario-card" id="sectionScenarios">
+        <div class="bottom-card-header">
+          <div class="card-title-group">
+            <div class="card-icon scenario-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 20V10M12 20V4M6 20v-6"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="bottom-card-title">Compare Print Scenarios</h3>
+              <p class="bottom-card-sub">Evaluate Standard vs Optimized vs Premium trade-offs</p>
+            </div>
+          </div>
+
+          <div class="scenario-actions">
+            <button type="button" id="copyCurrentToScenarioBtn" class="action-btn-secondary" title="Save current parameters into selected scenario">
+              <span>Clone Current into Scenario</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="scenario-table-wrapper">
+          <table class="scenario-table" id="scenarioComparisonTable">
+            <thead>
+              <tr>
+                <th class="th-metric">Metric</th>
+                <th class="th-scenario">
+                  <div class="scenario-th-header">
+                    <span>Scenario A</span>
+                    <span class="scenario-badge badge-standard">Standard</span>
+                  </div>
+                  <button type="button" class="apply-scenario-btn" data-scenario="A">Apply to Calc</button>
+                </th>
+                <th class="th-scenario">
+                  <div class="scenario-th-header">
+                    <span>Scenario B</span>
+                    <span class="scenario-badge badge-optimized">Optimized</span>
+                  </div>
+                  <button type="button" class="apply-scenario-btn" data-scenario="B">Apply to Calc</button>
+                </th>
+                <th class="th-scenario">
+                  <div class="scenario-th-header">
+                    <span>Scenario C</span>
+                    <span class="scenario-badge badge-premium">Premium</span>
+                  </div>
+                  <button type="button" class="apply-scenario-btn" data-scenario="C">Apply to Calc</button>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="metric-name">Material & Weight</td>
+                <td id="scenA_material">PLA (125g)</td>
+                <td id="scenB_material">PLA (95g)</td>
+                <td id="scenC_material">PETG (150g)</td>
+              </tr>
+              <tr>
+                <td class="metric-name">Print Duration</td>
+                <td id="scenA_time">6h 30m</td>
+                <td id="scenB_time">4h 45m</td>
+                <td id="scenC_time">9h 15m</td>
+              </tr>
+              <tr>
+                <td class="metric-name">Material Cost</td>
+                <td id="scenA_matCost">₹225.00</td>
+                <td id="scenB_matCost">₹171.00</td>
+                <td id="scenC_matCost">₹330.00</td>
+              </tr>
+              <tr>
+                <td class="metric-name">Machine Cost</td>
+                <td id="scenA_machCost">₹45.50</td>
+                <td id="scenB_machCost">₹33.25</td>
+                <td id="scenC_machCost">₹64.75</td>
+              </tr>
+              <tr>
+                <td class="metric-name">Energy & Maintenance</td>
+                <td id="scenA_energyMaint">₹59.80</td>
+                <td id="scenB_energyMaint">₹43.70</td>
+                <td id="scenC_energyMaint">₹85.10</td>
+              </tr>
+              <tr>
+                <td class="metric-name">Labor Cost</td>
+                <td id="scenA_labor">₹75.00</td>
+                <td id="scenB_labor">₹50.00</td>
+                <td id="scenC_labor">₹125.00</td>
+              </tr>
+              <tr class="row-highlight">
+                <td class="metric-name">Total Base Cost</td>
+                <td id="scenA_totalBase">₹423.30</td>
+                <td id="scenB_totalBase" class="highlight-lowest">₹312.45</td>
+                <td id="scenC_totalBase">₹637.20</td>
+              </tr>
+              <tr>
+                <td class="metric-name">Profit Margin</td>
+                <td id="scenA_profit">₹111.12 (25%)</td>
+                <td id="scenB_profit">₹65.61 (20%)</td>
+                <td id="scenC_profit" class="highlight-highest">₹235.76 (35%)</td>
+              </tr>
+              <tr class="row-grand-total">
+                <td class="metric-name font-bold">Final Price</td>
+                <td id="scenA_final" class="font-bold">₹555.59</td>
+                <td id="scenB_final" class="font-bold">
+                  <span>₹393.69</span>
+                  <span class="badge-mini-lowest">Lowest Cost</span>
+                </td>
+                <td id="scenC_final" class="font-bold">
+                  <span>₹909.38</span>
+                  <span class="badge-mini-highest">Highest Margin</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ESTIMATE HISTORY (LOCAL STORAGE) -->
+      <section class="bottom-card history-card" id="sectionHistory">
+        <div class="bottom-card-header">
+          <div class="card-title-group">
+            <div class="card-icon history-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 14 14"></polyline>
+              </svg>
+            </div>
+            <div>
+              <h3 class="bottom-card-title">Saved Estimates History</h3>
+              <p class="bottom-card-sub">Browser-persisted quotes, duplicates & benchmarks</p>
+            </div>
+          </div>
+
+          <div class="history-actions">
+            <button type="button" id="clearAllHistoryBtn" class="pill-btn-danger" title="Clear all saved estimates">
+              <span>Clear History</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="history-list-container" id="historyListContainer">
+          <!-- Dynamically populated from localStorage -->
+          <div class="empty-history" id="emptyHistoryNotice">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4">
+              <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <p>No saved estimates yet. Click <strong>"Save Estimate"</strong> above to store current configuration.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- EXPORT & INVOICE MODAL -->
+  <div class="modal-backdrop" id="exportModalBackdrop" aria-hidden="true">
+    <div class="modal-dialog invoice-modal" role="dialog" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-badge">FORMAL QUOTATION</span>
+          <h3 class="modal-title" id="modalTitle">Export 3D Print Cost Estimate</h3>
+        </div>
+        <button type="button" class="modal-close-btn" id="closeExportModalBtn" aria-label="Close modal">✕</button>
+      </div>
+
+      <!-- Printable Invoice Layout Content -->
+      <div class="modal-body print-document-body" id="printableInvoiceDoc">
+        <div class="invoice-header">
+          <div class="invoice-brand">
+            <div class="inv-logo-row">
+              <span class="inv-logo-symbol">⚙</span>
+              <h2 class="inv-brand-name">PRINTFORGE</h2>
+            </div>
+            <p class="inv-brand-motto">Calculate. Optimize. Print.</p>
+          </div>
+          <div class="invoice-meta">
+            <div class="meta-row">
+              <span class="meta-lbl">Date:</span>
+              <strong id="invDate">October 17, 2026</strong>
+            </div>
+            <div class="meta-row">
+              <span class="meta-lbl">Doc ID:</span>
+              <strong id="invDocId">PF-2026-8841</strong>
+            </div>
+            <div class="meta-row">
+              <span class="meta-lbl">Status:</span>
+              <span class="inv-status-pill">APPROVED ESTIMATE</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="invoice-project-details">
+          <div class="inv-field-group">
+            <label class="inv-lbl" for="invEstimateName">Estimate Name / Job Reference:</label>
+            <input type="text" id="invEstimateName" class="inv-input" value="Custom 3D Print Job #1042">
+          </div>
+          <div class="inv-field-group">
+            <label class="inv-lbl" for="invClientName">Client / Organization:</label>
+            <input type="text" id="invClientName" class="inv-input" value="Internal Production / Rapid Prototyping">
+          </div>
+        </div>
+
+        <!-- Technical Specs Summary -->
+        <div class="inv-specs-grid">
+          <div class="inv-spec-cell">
+            <span class="spec-lbl">Material</span>
+            <strong class="spec-val" id="invMaterial">PLA (125 g)</strong>
+          </div>
+          <div class="inv-spec-cell">
+            <span class="spec-lbl">Print Duration</span>
+            <strong class="spec-val" id="invDuration">6h 30m</strong>
+          </div>
+          <div class="inv-spec-cell">
+            <span class="spec-lbl">Batch Quantity</span>
+            <strong class="spec-val" id="invQuantity">1 Part</strong>
+          </div>
+          <div class="inv-spec-cell">
+            <span class="spec-lbl">Energy Used</span>
+            <strong class="spec-val" id="invEnergy">0.78 kWh</strong>
+          </div>
+        </div>
+
+        <!-- Itemized Cost Table -->
+        <table class="inv-cost-table">
+          <thead>
+            <tr>
+              <th>Line Item / Resource</th>
+              <th class="text-right">Unit Metric</th>
+              <th class="text-right">Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Material Spool Usage (incl. 8% waste allowance)</td>
+              <td class="text-right" id="invLineMaterialUnit">135g gross</td>
+              <td class="text-right" id="invLineMaterialCost">₹243.00</td>
+            </tr>
+            <tr>
+              <td>Machine Depreciation Allocation</td>
+              <td class="text-right" id="invLineMachineUnit">6.50 hrs</td>
+              <td class="text-right" id="invLineMachineCost">₹45.50</td>
+            </tr>
+            <tr>
+              <td>Electrical Energy Consumption</td>
+              <td class="text-right" id="invLineEnergyUnit">0.78 kWh</td>
+              <td class="text-right" id="invLineEnergyCost">₹7.80</td>
+            </tr>
+            <tr>
+              <td>Technician Setup & Post-Processing Labor</td>
+              <td class="text-right" id="invLineLaborUnit">0.50 hrs</td>
+              <td class="text-right" id="invLineLaborCost">₹75.00</td>
+            </tr>
+            <tr>
+              <td>Hardware Maintenance & Tooling Wear</td>
+              <td class="text-right" id="invLineMaintUnit">6.50 hrs</td>
+              <td class="text-right" id="invLineMaintCost">₹52.00</td>
+            </tr>
+            <tr class="inv-subtotal-row">
+              <td colspan="2">Total Direct Base Cost</td>
+              <td class="text-right" id="invBaseCost">₹423.30</td>
+            </tr>
+            <tr>
+              <td>Operational Overhead (Facility, Software, Packaging)</td>
+              <td class="text-right" id="invOverheadPct">5.0%</td>
+              <td class="text-right" id="invOverheadCost">₹21.17</td>
+            </tr>
+            <tr class="inv-subtotal-row">
+              <td colspan="2">Net Cost Before Margin</td>
+              <td class="text-right" id="invCostBeforeProfit">₹444.47</td>
+            </tr>
+            <tr>
+              <td>Commercial Profit Margin</td>
+              <td class="text-right" id="invProfitPct">25.0%</td>
+              <td class="text-right" id="invProfitCost">+₹111.12</td>
+            </tr>
+            <tr class="inv-grand-row">
+              <td colspan="2">
+                <strong>TOTAL ESTIMATE QUOTATION</strong>
+              </td>
+              <td class="text-right inv-grand-val" id="invFinalTotal">₹555.59</td>
+            </tr>
+            <tr class="inv-unit-row">
+              <td colspan="2">Effective Unit Price per Part</td>
+              <td class="text-right" id="invUnitCost">₹555.59 / part</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="inv-notes">
+          <p><strong>Terms:</strong> Quotation valid for 30 calendar days. Pricing based on specified material density and geometry sliced with nominal infill settings. Machine operating parameters adhere to standard ISO/ASTM additive manufacturing guidelines.</p>
+        </div>
+      </div>
+
+      <!-- Modal Footer Action Controls -->
+      <div class="modal-footer">
+        <button type="button" id="copyClipboardBtn" class="action-btn-secondary">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          <span>Copy Summary</span>
+        </button>
+        <button type="button" id="downloadJsonBtn" class="action-btn-secondary">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Download JSON</span>
+        </button>
+        <button type="button" id="printInvoiceBtn" class="action-btn-primary">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          <span>Print / Save as PDF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAVE ESTIMATE MODAL -->
+  <div class="modal-backdrop" id="saveModalBackdrop" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="dialog" aria-labelledby="saveModalTitle">
+      <div class="modal-header">
+        <h3 class="modal-title" id="saveModalTitle">Save Estimate to History</h3>
+        <button type="button" class="modal-close-btn" id="closeSaveModalBtn" aria-label="Close modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="saveEstimateNameInput" class="field-label">Estimate Reference Name</label>
+          <input type="text" id="saveEstimateNameInput" class="field-input" placeholder="e.g. Drone Arm Prototype v2">
+        </div>
+        <div class="form-group">
+          <label for="saveEstimateNotesInput" class="field-label">Notes (Optional)</label>
+          <textarea id="saveEstimateNotesInput" class="field-input field-textarea" rows="2" placeholder="e.g. 0.2mm layer height, 3 walls, 20% gyroid infill"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="cancelSaveBtn" class="action-btn-secondary">Cancel</button>
+        <button type="button" id="confirmSaveBtn" class="action-btn-primary">Save to History</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <span class="footer-brand">PRINTFORGE</span>
+        <span class="footer-sep">•</span>
+        <span class="footer-tagline">Calculate. Optimize. Print.</span>
+      </div>
+      <div class="footer-center">
+        <span>Precision Engineering Additive Manufacturing Suite</span>
+      </div>
+      <div class="footer-right">
+        <span>Deterministic Calculation Standard ISO/ASTM 52900</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
